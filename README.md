@@ -1,5 +1,5 @@
 # Music-Player
-Simple browser music player - school project
+Simple browser music player
 
 ![look](img/look.png)
 
