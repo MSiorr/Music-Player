@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin DragDrop</title>
+    <style>
+        * {
+            font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+        }
+        body {
+            background-color: rgb(48, 48, 48);
+        }
+        #title {
+            text-align: center;
+            color: white;
+            font-size: 40px;
+        }
+        #uploadDiv {
+            width: 70%;
+            outline: 5px dashed white;
+            height: 200px;
+            background-color: rgb(38,38,38);
+            margin: 0 auto;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 30px;
+        }
+        #menu {
+            margin: 0 auto;
+            width: 70%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #albumName {
+            width: calc(80% - 10px);
+            outline: none;
+            background-color: rgba(0,0,0,0.5);
+            border: 1px solid white;
+            padding: 2px 5px;
+            color: white;
+            text-align: center;
+            font-size: 20px;
+            border-radius: 10px;
+        }
+        #albumName:disabled {
+            background-color: rgb(55, 55, 55);
+            color: rgb(179, 179, 179);
+        }
+        #albumBtn {
+            margin: 10px 0 20px 0;
+            padding: 5px 10px;
+            font-size: 16px;
+            outline: none;
+            border: 1px solid white;
+            background-color: rgba(100,100,100,0.01);
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        #albumBtn:hover {
+            background-color:rgba(255,255,255,0.08);
+        }
+        #fileList {
+            width: 70%;
+            max-height: calc(100vh - 460px);
+            margin: 30px auto 0 auto;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        .fileRow{
+            text-align: center;
+            color: white;
+            background-color:rgb(38,38,38);
+            border: 2px solid white;
+            margin: 2px 0;
+            padding: 4px 0;
+            font-size: 18px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="title">UPLOAD</h1>
+    <div id="menu">
+        <input type="text" id="albumName" placeholder="New Album Name" autocomplete="off">
+        <button id="albumBtn">Create album</button>
+    </div>
+    <div id="uploadDiv"></div>
+    <div id="fileList"></div>
+
+
+    <script>
+        let html = document.querySelector("html");
+        let uploadDiv = document.querySelector("#uploadDiv");
+        let albumBtn = document.querySelector("#albumBtn");
+        let albumInput = document.querySelector("#albumName")
+        uploadDiv.style.display = "none";
+        uploadDiv.innerHTML = "Upload plików"
+
+        let inCreatedAlbum = false;
+
+        html.ondragover = function (e) {
+            uploadDiv.innerHTML = "Upuść pliki tutaj";
+            e.preventDefault(); 
+            e.stopPropagation();
+        }
+        html.ondragleave = function (e) {
+            uploadDiv.innerHTML = "Upload plików";
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        html.ondrop = function (e) {
+            uploadDiv.innerHTML = "Pliki upuszczone w złym miejscu"
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+
+        uploadDiv.ondragenter = function (e) {
+            uploadDiv.innerHTML = "Upuść pliki"
+            e.stopPropagation();
+            e.preventDefault();
+        }
+        uploadDiv.ondragover = function (e) {
+            uploadDiv.innerHTML = "Upuść pliki";
+            e.stopPropagation();
+            e.preventDefault();
+        }
+        uploadDiv.ondragleave = function (e) {
+            uploadDiv.innerHTML = "Upuść pliki tutaj";
+            e.stopPropagation();
+            e.preventDefault();
+        }
+
+        albumBtn.onclick = (e) => {
+
+            let albumName = albumInput.value
+            if(albumName != ""){
+                if(inCreatedAlbum){
+                    uploadDiv.style.display = "none"
+                    e.target.innerHTML = "Create Album"
+                    albumInput.disabled = false;
+                    albumInput.value = "";
+                    document.querySelector("#fileList").innerHTML = "";
+                } else {
+                    uploadDiv.style.display = "flex"
+                    e.target.innerHTML = "Change Album"
+                    albumInput.disabled = true;
+                }
+            }
+
+            inCreatedAlbum = !inCreatedAlbum;
+        }
+
+
+        uploadDiv.ondrop = function(e) {
+            uploadDiv.innerHTML = "Uploading...";
+            uploadDiv.style.backgroundColor = "rgba(255,255,255,0.2)"
+            e.stopPropagation();
+            e.preventDefault();
+
+            let files = e.dataTransfer.files;
+            let items = e.dataTransfer.items;
+            let dirFound = false;
+            for(let i = 0; i < items.length; i++){
+                if(typeof(items[i].webkitGetAsEntry) == "function") {
+                    if(items[i].webkitGetAsEntry().isFile == false){
+                        dirFound = true;
+                    }
+                } else if (typeof(items[i].getAsEntry) == "function"){
+                    if(items[i].getAsEntry().isFile == false){
+                        dirFound = true;
+                    }
+                }
+            }
+
+            if(dirFound == false){
+                let fd = new FormData();
+                for(let i = 0; i<files.length; i++){
+                    fd.append("file", files[i])
+                }
+                fd.append("album", albumInput.value);
+    
+                fetch("/upload", {
+                    method: 'POST',
+                    body: fd
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        uploadDiv.innerHTML = "Upload plików";
+                        uploadDiv.removeAttribute("style")
+                        let fileList = document.querySelector("#fileList");
+                        data.forEach( e => {
+                            let fileRow = document.createElement("div");
+                            fileRow.classList.add("fileRow");
+                            fileRow.innerHTML = e;
+                            fileList.appendChild(fileRow);
+                        })
+                    })
+            } else {
+                uploadDiv.innerHTML = "Nie wolno katalogów";
+                uploadDiv.removeAttribute("style")
+            }
+        }
+
+        /* TODO
+        0 - Progres i info o przeslanych plikach                            COMPLETE
+        1 - Tworzenie nowego katalogu / albumu (Input podaje klient)        COMPLETE
+        2 - Blokada przesłania katalogu                                     COMPLETE
+        3 - Zmiana przychodzącego jpg / png na okladka.jpg                  COMPLETE
+        4 - dodanie aftera w okladkach (Żeby była nazwa)                    COMPLETE
+        5 - defaultowa okladka                                              COMPLETE
+        6 - odgrywanie utworow z uploada                                    COMPLETE
+        7 - dodawanie utworow z uploada do playlisty                        COMPLETE
+        8 - volume bar
+        */
+
+    </script>
+</body>
+</html>
