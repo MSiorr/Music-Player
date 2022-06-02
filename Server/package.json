@@ -1,0 +1,17 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dbJS.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "Michal Slezak",
+  "license": "ISC",
+  "dependencies": {
+    "formidable": "^2.0.1",
+    "fs": "0.0.1-security",
+    "nedb": "^1.8.0"
+  }
+}
