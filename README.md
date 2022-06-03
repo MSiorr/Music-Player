@@ -1,7 +1,7 @@
 # Music-Player
 Simple browser music player
 
-![look](img/look.png)
+![obraz](https://user-images.githubusercontent.com/49323088/171880972-67ea68cd-4e81-4db1-81da-c1add49d2dfc.png)
 
 
 ##  Overall info
